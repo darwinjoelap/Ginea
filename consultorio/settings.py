@@ -158,3 +158,5 @@ CRISPY_TEMPLATE_PACK = 'bootstrap5'
 # Misc
 # ─────────────────────────────────────────────
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# Whitenoise sirve estáticos aunque no exista staticfiles/
+WHITENOISE_AUTOREFRESH = True
