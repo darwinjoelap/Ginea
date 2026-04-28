@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block title %}{{ titulo }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="{% url 'pacientes:detalle' paciente.pk %}"
+     class="btn btn-outline-secondary btn-sm me-2">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h5 class="mb-0 fw-bold">{{ titulo }}</h5>
+</div>
+
+<div class="alert alert-light border mb-3">
+  <i class="bi bi-person-circle me-1"></i>
+  <strong>{{ paciente.nombre_completo }}</strong>
+  <span class="text-muted ms-2">{{ paciente.cedula }} · {{ paciente.get_edad }} años</span>
+  {% if paciente.alergias %}
+  <div class="mt-1">
+    <span class="badge bg-danger">Alergias: {{ paciente.alergias|truncatechars:60 }}</span>
+  </div>
+  {% endif %}
+</div>
+
+{% if cita %}
+<div class="alert alert-info mb-3">
+  <i class="bi bi-calendar-check me-1"></i>
+  Cita del {{ cita.fecha|date:"d/m/Y" }} a las {{ cita.hora_inicio|time:"H:i" }}
+  — {{ cita.motivo }}
+</div>
+{% endif %}
+
+<div class="card shadow-sm">
+  <div class="card-body p-3 p-md-4">
+    <form method="post" novalidate>
+      {% csrf_token %}
+      {% crispy form %}
+    </form>
+  </div>
+</div>
+{% endblock %}

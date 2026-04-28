@@ -1,0 +1,180 @@
+{% extends 'base.html' %}
+{% block title %}Agenda {{ fecha|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+
+<!-- Navegación de fecha -->
+<div class="d-flex align-items-center justify-content-between mb-3">
+  <a href="{% url 'agenda:dia' dia_anterior %}" class="btn btn-outline-secondary btn-touch px-3">
+    <i class="bi bi-chevron-left"></i>
+  </a>
+  <div class="text-center">
+    <h5 class="mb-0 fw-bold">
+      {% if es_hoy %}
+        <span class="badge me-1" style="background-color:#6f42c1">Hoy</span>
+      {% endif %}
+      {{ fecha|date:"l d \d\e F" }}
+    </h5>
+    <small class="text-muted">{{ fecha|date:"Y" }}</small>
+  </div>
+  <a href="{% url 'agenda:dia' dia_siguiente %}" class="btn btn-outline-secondary btn-touch px-3">
+    <i class="bi bi-chevron-right"></i>
+  </a>
+</div>
+
+<!-- Accesos rápidos -->
+<div class="d-flex gap-2 mb-3">
+  {% if not es_hoy %}
+  <a href="{% url 'agenda:hoy' %}" class="btn btn-outline-primary btn-touch flex-grow-1">
+    <i class="bi bi-calendar-check me-1"></i> Hoy
+  </a>
+  {% endif %}
+  <a href="{% url 'agenda:semana' %}" class="btn btn-outline-secondary btn-touch flex-grow-1">
+    <i class="bi bi-calendar-week me-1"></i> Semana
+  </a>
+  <a href="{% url 'agenda:cita_nueva' %}?fecha={{ fecha|date:'Y-m-d' }}"
+     class="btn btn-touch flex-grow-1" style="background-color:#6f42c1;color:white">
+    <i class="bi bi-plus-lg me-1"></i> Nueva cita
+  </a>
+</div>
+
+<!-- Resumen -->
+{% if resumen.total > 0 %}
+<div class="row g-2 mb-3">
+  <div class="col-4">
+    <div class="card text-center border-0 bg-light py-2">
+      <div class="fw-bold fs-4">{{ resumen.total }}</div>
+      <small class="text-muted">Total</small>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="card text-center border-0 py-2" style="background:#d1fae5">
+      <div class="fw-bold fs-4 text-success">{{ resumen.atendidas }}</div>
+      <small class="text-muted">Atendidas</small>
+    </div>
+  </div>
+  <div class="col-4">
+    <div class="card text-center border-0 py-2" style="background:#dbeafe">
+      <div class="fw-bold fs-4 text-primary">{{ resumen.pendientes }}</div>
+      <small class="text-muted">Pendientes</small>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Lista de citas -->
+{% if citas %}
+<div class="d-flex flex-column gap-3">
+  {% for cita in citas %}
+  <div class="card cita-card estado-{{ cita.estado }} shadow-sm">
+    <div class="card-body py-3">
+      <div class="d-flex justify-content-between align-items-start">
+        <div class="flex-grow-1">
+
+          <!-- Hora -->
+          <div class="text-muted small mb-1">
+            <i class="bi bi-clock me-1"></i>
+            {{ cita.hora_inicio|time:"H:i" }} — {{ cita.hora_fin|time:"H:i" }}
+            {% if cita.lugar %}
+            <span class="ms-2">
+              <i class="bi bi-geo-alt me-1"></i>{{ cita.lugar.nombre }}
+            </span>
+            {% endif %}
+          </div>
+
+          <!-- Nombre paciente -->
+          <h6 class="mb-1 fw-bold">
+            <a href="{% url 'pacientes:detalle' cita.paciente.pk %}"
+               class="text-decoration-none text-dark">
+              {{ cita.paciente.nombre_completo }}
+            </a>
+          </h6>
+
+          <!-- Motivo -->
+          <div class="text-muted small">
+            <i class="bi bi-chat-text me-1"></i>{{ cita.motivo }}
+          </div>
+
+          {% if cita.notas %}
+          <div class="text-muted small mt-1">
+            <i class="bi bi-sticky me-1"></i>{{ cita.notas }}
+          </div>
+          {% endif %}
+
+          <!-- Indicador de recordatorio -->
+          {% if cita.recordatorio_enviado %}
+          <div class="mt-1">
+            <span class="badge bg-light text-success border border-success" style="font-size:0.7rem">
+              <i class="bi bi-check-circle me-1"></i>
+              Recordatorio enviado {{ cita.recordatorio_fecha|date:"d/m H:i" }}
+              via {{ cita.get_recordatorio_canal_display }}
+            </span>
+          </div>
+          {% endif %}
+
+        </div>
+
+        <!-- Acciones -->
+        <div class="d-flex flex-column align-items-end gap-1 ms-2">
+          <span class="badge bg-{{ cita.get_color }}">
+            {{ cita.get_estado_display }}
+          </span>
+          <div class="d-flex gap-1 mt-1">
+
+            <!-- WhatsApp recordatorio -->
+            <a href="{{ cita.get_whatsapp_url }}" target="_blank"
+               class="btn btn-sm btn-outline-success" title="Enviar recordatorio WhatsApp"
+               onclick="marcarRecordatorio({{ cita.pk }}, 'whatsapp')">
+              <i class="bi bi-whatsapp"></i>
+            </a>
+
+            {% if user.es_doctora %}
+            <!-- Registrar consulta -->
+            <a href="{% url 'consultas:nueva' cita.paciente.pk %}?cita={{ cita.pk }}"
+               class="btn btn-sm btn-success" title="Registrar consulta">
+              <i class="bi bi-journal-plus"></i>
+            </a>
+            {% endif %}
+
+            <!-- Editar cita -->
+            <a href="{% url 'agenda:cita_editar' cita.pk %}"
+               class="btn btn-sm btn-outline-secondary" title="Editar cita">
+              <i class="bi bi-pencil"></i>
+            </a>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+
+{% else %}
+<div class="text-center py-5 text-muted">
+  <i class="bi bi-calendar-x" style="font-size:3rem;opacity:0.3"></i>
+  <p class="mt-3 mb-1">No hay citas para este día</p>
+  <a href="{% url 'agenda:cita_nueva' %}?fecha={{ fecha|date:'Y-m-d' }}"
+     class="btn btn-primary btn-touch mt-2">
+    <i class="bi bi-plus-lg me-1"></i> Agendar primera cita
+  </a>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function marcarRecordatorio(citaId, canal) {
+  // Marca el recordatorio como enviado via AJAX
+  fetch(`/agenda/citas/${citaId}/recordatorio/`, {
+    method: 'POST',
+    headers: {
+      'X-CSRFToken': document.cookie.match(/csrftoken=([^;]+)/)?.[1] || '',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ canal: canal }),
+  }).catch(() => {});  // Silencioso — no bloquea abrir WhatsApp
+}
+</script>
+{% endblock %}

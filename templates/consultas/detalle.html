@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Consulta {{ consulta.fecha|date:"d/m/Y" }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center mb-3">
+  <a href="{% url 'pacientes:detalle' consulta.paciente.pk %}"
+     class="btn btn-outline-secondary btn-sm me-2">
+    <i class="bi bi-arrow-left"></i>
+  </a>
+  <h5 class="mb-0 fw-bold">
+    Consulta {{ consulta.fecha|date:"d/m/Y" }}
+    {% if consulta.es_prenatal %}
+    <span class="badge ms-1" style="background-color:#ec4899">Prenatal</span>
+    {% endif %}
+  </h5>
+</div>
+
+<div class="card shadow-sm mb-3">
+  <div class="card-body">
+    <p class="text-muted small mb-3">
+      <i class="bi bi-person-circle me-1"></i>
+      <a href="{% url 'pacientes:detalle' consulta.paciente.pk %}" class="text-decoration-none">
+        {{ consulta.paciente.nombre_completo }}
+      </a>
+      &nbsp;·&nbsp; {{ consulta.paciente.cedula }}
+    </p>
+
+    {% if consulta.peso or consulta.tension_arterial %}
+    <div class="d-flex gap-3 mb-3">
+      {% if consulta.peso %}
+      <span class="badge bg-light text-dark border fs-6">
+        <i class="bi bi-activity me-1"></i>{{ consulta.peso }} kg
+      </span>
+      {% endif %}
+      {% if consulta.tension_arterial %}
+      <span class="badge bg-light text-dark border fs-6">
+        <i class="bi bi-heart-pulse me-1"></i>{{ consulta.tension_arterial }} mmHg
+      </span>
+      {% endif %}
+    </div>
+    {% endif %}
+
+    <h6 class="text-muted text-uppercase small">Motivo</h6>
+    <p>{{ consulta.motivo_consulta }}</p>
+
+    {% if consulta.sintomas_actuales %}
+    <h6 class="text-muted text-uppercase small">Síntomas</h6>
+    <p>{{ consulta.sintomas_actuales }}</p>
+    {% endif %}
+
+    {% if consulta.examen_fisico %}
+    <h6 class="text-muted text-uppercase small">Examen físico</h6>
+    <p>{{ consulta.examen_fisico }}</p>
+    {% endif %}
+
+    <h6 class="text-muted text-uppercase small">Diagnóstico</h6>
+    <p>{{ consulta.diagnostico }}</p>
+
+    <h6 class="text-muted text-uppercase small">Tratamiento</h6>
+    <p>{{ consulta.tratamiento }}</p>
+
+    {% if consulta.observaciones %}
+    <h6 class="text-muted text-uppercase small">Observaciones</h6>
+    <p>{{ consulta.observaciones }}</p>
+    {% endif %}
+
+    {% if consulta.proxima_cita %}
+    <div class="alert alert-light border mt-3">
+      <i class="bi bi-calendar-event me-1"></i>
+      <strong>Próxima cita:</strong> {{ consulta.proxima_cita|date:"d/m/Y" }}
+    </div>
+    {% endif %}
+
+    {% if consulta.es_prenatal %}
+    <hr>
+    <h6 class="text-uppercase small" style="color:#ec4899">Control prenatal</h6>
+    <div class="row g-2 small">
+      <div class="col-6"><strong>Semanas:</strong> {{ consulta.semanas_gestacion }}</div>
+      <div class="col-6"><strong>FPP:</strong> {{ consulta.fpp|date:"d/m/Y"|default:"—" }}</div>
+      <div class="col-6"><strong>Altura uterina:</strong> {{ consulta.altura_uterina|default:"—" }} cm</div>
+      <div class="col-6"><strong>FCF:</strong> {{ consulta.fcf|default:"—" }} lpm</div>
+      <div class="col-6"><strong>Presentación:</strong> {{ consulta.presentacion_fetal|default:"—" }}</div>
+      <div class="col-6"><strong>Edemas:</strong> {% if consulta.edemas %}Sí{% else %}No{% endif %}</div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Adjuntos -->
+<div class="d-flex justify-content-between align-items-center mb-2">
+  <h6 class="fw-bold mb-0">Archivos adjuntos</h6>
+  <a href="{% url 'consultas:adjuntar' consulta.pk %}"
+     class="btn btn-sm btn-outline-primary">
+    <i class="bi bi-paperclip me-1"></i> Adjuntar
+  </a>
+</div>
+
+{% if consulta.adjuntos.all %}
+<div class="d-flex flex-wrap gap-2">
+  {% for adj in consulta.adjuntos.all %}
+    {% if adj.tipo == 'imagen' %}
+    <a href="{{ adj.get_url }}" target="_blank">
+      <img src="{{ adj.get_thumbnail_url }}" alt="{{ adj.nombre_original }}"
+           class="rounded border" style="width:80px;height:80px;object-fit:cover">
+    </a>
+    {% else %}
+    <a href="{{ adj.get_url }}" target="_blank" class="btn btn-outline-danger">
+      <i class="bi bi-file-pdf me-1"></i>{{ adj.nombre_original|truncatechars:25 }}
+    </a>
+    {% endif %}
+  {% endfor %}
+</div>
+{% else %}
+<p class="text-muted small">No hay archivos adjuntos.</p>
+{% endif %}
+{% endblock %}
