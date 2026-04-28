@@ -1,0 +1,8 @@
+﻿[build]
+builder = "nixpacks"
+
+[deploy]
+startCommand = "python manage.py migrate && python crear_admin.py && gunicorn consultorio.wsgi --bind 0.0.0.0:$PORT --workers 2 --timeout 120"
+healthcheckPath = "/agenda/"
+healthcheckTimeout = 30
+restartPolicyType = "on_failure"
